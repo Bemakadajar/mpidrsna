@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPI Darsana - Pendidikan Agama Hindu SMA</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        bali: {
+                            maroon: '#780000',
+                            red: '#C1121F',
+                            cream: '#FDF0D5',
+                            gold: '#D4A373',
+                            dark: '#003049',
+                            cardBg: '#FFFCF7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #2b2b2b;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        
+        .app-container {
+            width: 100vw;
+            height: 100vh;
+            max-width: 480px;
+            max-height: 920px;
+            margin: auto;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 2rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #FDFBF7;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4a373' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                height: 100vh;
+                max-height: none;
+                border-radius: 0;
+            }
+        }
+
+        .screen-panel {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            opacity: 0;
+            transform: scale(0.98);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            background: #FDFBF7;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .screen-panel.active {
+            display: flex;
+            opacity: 1;
+            transform: scale(1);
+            z-index: 20;
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #D4A373, #BC6C25);
+        }
+
+        .maroon-gradient {
+            background: linear-gradient(135deg, #780000, #C1121F);
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #D4A373;
+            border-radius: 4px;
+        }
+
+        .dropdown-menu {
+            max-height: 160px;
+            overflow-y: auto;
+            display: none;
+        }
+        .dropdown-menu.show {
+            display: block;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div id="customModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-xs w-full p-6 text-center transform scale-95 transition-all border-t-8 border-t-bali-maroon">
+            <div id="modalIconBox" class="w-14 h-14 rounded-full bg-bali-cream text-bali-maroon mx-auto flex items-center justify-center text-2xl mb-3 shadow-inner">
+                <i class="ph-fill ph-info"></i>
+            </div>
+            <h3 id="modalTitle" class="text-lg font-bold text-gray-800 mb-1 font-serif">Informasi</h3>
+            <p id="modalMessage" class="text-gray-600 text-xs mb-5 leading-relaxed">Pesan sistem...</p>
+            <button onclick="closeModal()" class="w-full py-3 rounded-2xl maroon-gradient text-white font-bold text-xs shadow-md">
+                Mengerti
+            </button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        
+        <!-- App Header -->
+        <header id="appHeader" class="hidden px-5 py-3.5 bg-white/90 backdrop-blur border-b border-gray-100 flex items-center justify-between shrink-0 z-30">
+            <div class="flex items-center gap-3">
+                <button onclick="goToScreen('dashboard')" class="w-9 h-9 rounded-xl bg-bali-cream text-bali-maroon flex items-center justify-center text-base hover:bg-amber-100 transition-colors">
+                    <i class="ph-bold ph-house"></i>
+                </button>
+                <div>
+                    <h2 class="font-bold text-gray-800 text-xs leading-tight" id="hdrStudentName">-</h2>
+                    <p class="text-[10px] text-gray-500">Kelas <span id="hdrStudentClass">-</span> • Absen <span id="hdrStudentAbsen">-</span></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="goToScreen('instructions')" class="w-9 h-9 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center text-base hover:bg-gray-200 transition-colors" title="Petunjuk">
+                    <i class="ph-bold ph-info"></i>
+                </button>
+                <button onclick="goToScreen('identity')" class="w-9 h-9 rounded-xl bg-red-50 text-bali-maroon flex items-center justify-center text-base hover:bg-red-100 transition-colors" title="Ubah Identitas">
+                    <i class="ph-bold ph-user-gear"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Screen Panels -->
+        <div class="flex-grow relative overflow-hidden flex flex-col">
+
+            <!-- 1. SCREEN: COVER -->
+            <section id="screen-cover" class="screen-panel active flex flex-col justify-between p-6 bg-gradient-to-b from-amber-50/50 via-white to-white">
+                <div class="text-center pt-4">
+                    <div class="inline-flex items-center px-3 py-1 rounded-full bg-bali-cream text-bali-maroon font-semibold text-[11px] mb-3 border border-amber-200 shadow-sm">
+                        <i class="ph-bold ph-book-open mr-1.5"></i> Kurikulum Merdeka • Fase E/F
+                    </div>
+                    <div class="w-16 h-16 rounded-2xl maroon-gradient text-white mx-auto flex items-center justify-center text-3xl shadow-lg mb-4">
+                        <i class="ph-fill ph-flower-lotus"></i>
+                    </div>
+                    <h1 class="text-2xl font-serif font-bold text-bali-dark leading-tight mb-2">
+                        MPI <span class="text-transparent bg-clip-text maroon-gradient">DARSANA</span>
+                    </h1>
+                    <p class="text-[11px] text-gray-500 uppercase tracking-widest font-semibold mb-4">
+                        Pendidikan Agama Hindu & Budi Pekerti SMA
+                    </p>
+                </div>
+
+                <div class="bg-white/80 border border-gray-100 rounded-2xl p-4 shadow-sm mb-4">
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <span class="font-semibold text-bali-maroon">Mata Pelajaran:</span>
+                        <span>Pend. Agama Hindu & Budi Pekerti</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <span class="font-semibold text-bali-maroon">Materi Utama:</span>
+                        <span>Sad Darsana (Enam Filsafat Hindu)</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-600">
+                        <span class="font-semibold text-bali-maroon">Sekolah:</span>
+                        <span id="coverSchoolName">SMA Negeri 1 Gianyar</span>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pb-2">
+                    <button onclick="goToScreen('identity')" class="w-full py-3.5 rounded-2xl maroon-gradient text-white font-bold text-sm shadow-lg hover:scale-[1.01] active:scale-95 transition-transform flex items-center justify-center gap-2">
+                        Mulai Belajar <i class="ph-bold ph-arrow-right"></i>
+                    </button>
+                    <button onclick="goToScreen('instructions')" class="w-full py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-xs hover:bg-gray-200 transition-colors">
+                        Petunjuk Penggunaan
+                    </button>
+                </div>
+            </section>
+
+            <!-- 2. SCREEN: IDENTITY INPUT -->
+            <section id="screen-identity" class="screen-panel flex flex-col justify-between p-6 bg-white">
+                <div class="overflow-y-auto custom-scroll pr-1">
+                    <div class="flex items-center justify-between mb-3">
+                        <button onclick="handleBackFromIdentity()" class="text-gray-400 hover:text-bali-maroon transition-colors flex items-center gap-1 text-xs font-medium">
+                            <i class="ph-bold ph-arrow-left"></i> Kembali
+                        </button>
+                        <span class="text-[10px] uppercase font-bold text-bali-gold tracking-widest">Langkah 1 dari 2</span>
+                    </div>
+                    
+                    <div class="text-center mb-5">
+                        <div class="w-12 h-12 rounded-2xl bg-bali-cream text-bali-gold mx-auto flex items-center justify-center mb-2 text-xl shadow-sm">
+                            <i class="ph-fill ph-student"></i>
+                        </div>
+                        <h2 class="text-xl font-serif font-bold text-bali-dark">Identitas Siswa</h2>
+                        <p class="text-[11px] text-gray-500 mt-0.5">Silakan isi identitas diri terlebih dahulu untuk memulai pembelajaran.</p>
+                    </div>
+
+                    <form id="identityForm" onsubmit="saveIdentity(event)" class="space-y-3.5">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">Nama Lengkap</label>
+                            <input type="text" id="inputName" placeholder="Contoh: I Wayan Sudarsana" class="w-full px-3.5 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-bali-maroon outline-none text-xs bg-gray-50" required>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">No. Absen</label>
+                                <input type="number" id="inputAbsen" min="1" placeholder="Cth: 12" class="w-full px-3.5 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-bali-maroon outline-none text-xs bg-gray-50" required>
+                            </div>
+                            
+                            <div class="relative">
+                                <label class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">Kelas</label>
+                                <div class="relative">
+                                    <input type="text" id="inputKelas" placeholder="Ketik/Pilih Kelas" autocomplete="off" onfocus="toggleKelasDropdown(true)" oninput="filterKelasDropdown()" class="w-full px-3.5 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-bali-maroon outline-none text-xs bg-gray-50" required>
+                                    <div class="absolute right-3 top-3.5 text-gray-400 pointer-events-none">
+                                        <i class="ph-bold ph-caret-down"></i>
+                                    </div>
+                                </div>
+                                <div id="kelasDropdown" class="dropdown-menu absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+                                    <div onclick="selectKelas('X E-1')" class="px-3 py-2 text-xs hover:bg-amber-50 cursor-pointer">X E-1</div>
+                                    <div onclick="selectKelas('X E-2')" class="px-3 py-2 text-xs hover:bg-amber-50 cursor-pointer">X E-2</div>
+                                    <div onclick="selectKelas('XI F-1')" class="px-3 py-2 text-xs hover:bg-amber-50 cursor-pointer">XI F-1</div>
+                                    <div onclick="selectKelas('XI F-2')" class="px-3 py-2 text-xs hover:bg-amber-50 cursor-pointer">XI F-2</div>
+                                    <div onclick="selectKelas('XII MIPA')" class="px-3 py-2 text-xs hover:bg-amber-50 cursor-pointer">XII MIPA</div>
+                                    <div onclick="selectKelas('XII IPS')" class="px-3 py-2 text-xs hover:bg-amber-50 cursor-pointer">XII IPS</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" class="w-full py-3.5 rounded-2xl gold-gradient text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-1.5">
+                                Simpan & Masuk Beranda <i class="ph-bold ph-check"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="text-center text-[10px] text-gray-400 pt-2 shrink-0">Data tersimpan secara aman di perangkat lokal Anda.</div>
+            </section>
+
+            <!-- 3. SCREEN: INSTRUCTIONS -->
+            <section id="screen-instructions" class="screen-panel flex flex-col justify-between p-6 bg-white">
+                <div class="overflow-y-auto custom-scroll pr-1 space-y-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <button onclick="goToScreen('cover')" class="text-gray-400 hover:text-bali-maroon text-xs font-medium flex items-center gap-1">
+                            <i class="ph-bold ph-arrow-left"></i> Kembali
+                        </button>
+                        <h2 class="text-base font-serif font-bold text-bali-dark">Petunjuk Penggunaan</h2>
+                    </div>
+
+                    <div class="space-y-2.5 text-xs text-gray-600">
+                        <div class="flex items-start gap-3 bg-amber-50/60 p-3 rounded-2xl border border-amber-200">
+                            <div class="w-6 h-6 rounded-full bg-bali-gold text-white flex items-center justify-center shrink-0 font-bold text-xs">1</div>
+                            <div><strong class="text-gray-800">Isi Identitas:</strong> Masukkan nama, nomor absen, dan kelas pada halaman awal sebelum masuk beranda.</div>
+                        </div>
+                        <div class="flex items-start gap-3 bg-amber-50/60 p-3 rounded-2xl border border-amber-200">
+                            <div class="w-6 h-6 rounded-full bg-bali-gold text-white flex items-center justify-center shrink-0 font-bold text-xs">2</div>
+                            <div><strong class="text-gray-800">Menu Belajar & Latihan:</strong> Pelajari modul, kerjakan soal latihan formatif dengan umpan balik benar/salah instan, lalu tandai selesai.</div>
+                        </div>
+                        <div class="flex items-start gap-3 bg-amber-50/60 p-3 rounded-2xl border border-amber-200">
+                            <div class="w-6 h-6 rounded-full bg-bali-gold text-white flex items-center justify-center shrink-0 font-bold text-xs">3</div>
+                            <div><strong class="text-gray-800">Penguncian Kuis:</strong> Menu Kuis Akhir terkunci dan baru akan terbuka otomatis setelah persentase belajar mencapai 100%.</div>
+                        </div>
+                        <div class="flex items-start gap-3 bg-amber-50/60 p-3 rounded-2xl border border-amber-200">
+                            <div class="w-6 h-6 rounded-full bg-bali-gold text-white flex items-center justify-center shrink-0 font-bold text-xs">4</div>
+                            <div><strong class="text-gray-800">Evaluasi & Pembahasan:</strong> Setelah kuis selesai dengan status benar/salah, kamu dapat melihat rekapitulasi jawaban secara rinci beserta pembahasan soal.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-3 shrink-0">
+                    <button onclick="goToScreen('dashboard')" class="w-full py-3 rounded-2xl maroon-gradient text-white font-bold text-xs shadow-md">
+                        Saya Mengerti, Lanjutkan <i class="ph-bold ph-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 4. SCREEN: DASHBOARD -->
+            <section id="screen-dashboard" class="screen-panel flex flex-col justify-between p-5 bg-gray-50/50">
+                <div class="overflow-y-auto custom-scroll pr-1 space-y-4">
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between border-l-4 border-l-bali-gold">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-xl maroon-gradient text-white flex items-center justify-center text-lg font-bold shadow-inner">
+                                <i class="ph-fill ph-user-circle"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-bali-dark text-sm" id="dashGreeting">Om Swastyastu!</h3>
+                                <p class="text-[11px] text-gray-500">Kelas <span id="dashClass">-</span> • Absen <span id="dashAbsen">-</span></p>
+                            </div>
+                        </div>
+                        <button onclick="goToScreen('identity')" class="text-[11px] text-bali-maroon bg-bali-cream px-2.5 py-1.5 rounded-lg font-bold hover:bg-amber-100 transition-colors">
+                            Ubah
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-end mb-2">
+                            <div>
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Aktivitas Belajar</span>
+                                <h4 class="text-xs font-bold text-gray-800" id="dashProgressText">0 dari 5 Modul Selesai</h4>
+                            </div>
+                            <div class="text-xl font-bold text-bali-maroon" id="dashProgressPct">0%</div>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-3 mb-2.5 overflow-hidden shadow-inner">
+                            <div id="dashProgressBar" class="maroon-gradient h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-[11px]">
+                            <span id="badgeLearningState" class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-semibold">Belum Memulai</span>
+                            <span id="badgeQuizState" class="px-2 py-0.5 rounded-md bg-red-50 text-bali-maroon font-semibold flex items-center gap-1">
+                                <i class="ph-fill ph-lock-key"></i> Kuis Terkunci
+                            </span>
+                        </div>
+                    </div>
+
+                    <button onclick="goToScreen('objectives')" class="w-full bg-white hover:bg-amber-50/50 border border-gray-100 rounded-2xl p-3.5 shadow-sm flex items-center justify-between text-left transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-base">
+                                <i class="ph-fill ph-target"></i>
+                            </div>
+                            <div>
+                                <h5 class="font-bold text-gray-800 text-xs">Tujuan Pembelajaran</h5>
+                                <p class="text-[10px] text-gray-500">Capaian & indikator penguasaan materi</p>
+                            </div>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-gray-400"></i>
+                    </button>
+
+                    <div class="grid grid-cols-1 gap-3">
+                        <div onclick="goToScreen('module-list')" class="bg-white hover:shadow-md border border-gray-100 rounded-2xl p-4 cursor-pointer flex items-center justify-between border-l-4 border-l-bali-gold group transition-all">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform">
+                                    <i class="ph-fill ph-books"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-serif font-bold text-bali-dark text-sm">Mulai Belajar</h4>
+                                    <p class="text-[11px] text-gray-500">5 Modul Sad Darsana Interaktif</p>
+                                </div>
+                            </div>
+                            <i class="ph-bold ph-caret-right text-gray-400 text-base group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+
+                        <div id="dashQuizCard" onclick="handleDashboardQuizClick()" class="bg-white border border-gray-100 rounded-2xl p-4 cursor-pointer flex items-center justify-between border-l-4 border-l-gray-300 group transition-all">
+                            <div class="flex items-center gap-3.5">
+                                <div id="dashQuizIconBox" class="w-12 h-12 rounded-2xl bg-gray-100 text-gray-400 flex items-center justify-center text-2xl transition-colors">
+                                    <i class="ph-fill ph-lock-key" id="dashQuizIcon"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-serif font-bold text-gray-800 text-sm" id="dashQuizTitle">Kuis Akhir</h4>
+                                    <p class="text-[11px] text-gray-500" id="dashQuizDesc">Selesaikan seluruh modul untuk membuka kuis.</p>
+                                </div>
+                            </div>
+                            <i class="ph-bold ph-caret-right text-gray-400 text-base group-hover:translate-x-1 transition-transform" id="dashQuizArrow"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-2 shrink-0 text-center text-[10px] text-gray-400">
+                    MPI Darsana • Kurikulum Merdeka
+                </div>
+            </section>
+
+            <!-- 5. SCREEN: LEARNING OBJECTIVES -->
+            <section id="screen-objectives" class="screen-panel flex flex-col justify-between p-5 bg-white">
+                <div class="overflow-y-auto custom-scroll pr-1 space-y-3">
+                    <div class="flex items-center justify-between mb-1">
+                        <button onclick="goToScreen('dashboard')" class="text-gray-400 hover:text-bali-maroon text-xs font-medium flex items-center gap-1">
+                            <i class="ph-bold ph-arrow-left"></i> Beranda
+                        </button>
+                        <h2 class="text-sm font-serif font-bold text-bali-dark">Tujuan Pembelajaran</h2>
+                    </div>
+
+                    <p class="text-[11px] text-gray-600 leading-relaxed bg-amber-50/50 p-3 rounded-2xl border border-amber-200">
+                        Setelah mempelajari Media Pembelajaran Interaktif ini, peserta didik diharapkan mampu mencapai kompetensi berikut:
+                    </p>
+
+                    <div class="space-y-2 text-xs text-gray-700">
+                        <div class="flex items-start gap-2 bg-gray-50 p-2.5 rounded-xl border border-gray-200">
+                            <i class="ph-bold ph-check-circle text-bali-maroon mt-0.5 text-sm shrink-0"></i>
+                            <span>Menjelaskan pengertian dan hakikat Darsana dalam sistem filsafat Hindu.</span>
+                        </div>
+                        <div class="flex items-start gap-2 bg-gray-50 p-2.5 rounded-xl border border-gray-200">
+                            <i class="ph-bold ph-check-circle text-bali-maroon mt-0.5 text-sm shrink-0"></i>
+                            <span>Mengidentifikasi enam aliran utama dalam sistem <em>Sad Darsana</em> (Astika).</span>
+                        </div>
+                        <div class="flex items-start gap-2 bg-gray-50 p-2.5 rounded-xl border border-gray-200">
+                            <i class="ph-bold ph-check-circle text-bali-maroon mt-0.5 text-sm shrink-0"></i>
+                            <span>Menganalisis pokok pemikiran dari masing-masing sistem Darsana secara runtut.</span>
+                        </div>
+                        <div class="flex items-start gap-2 bg-gray-50 p-2.5 rounded-xl border border-gray-200">
+                            <i class="ph-bold ph-check-circle text-bali-maroon mt-0.5 text-sm shrink-0"></i>
+                            <span>Mengaplikasikan nilai-nilai berpikir kritis, disiplin diri, dan pengendalian pikiran dalam kehidupan sehari-hari.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-3 shrink-0">
+                    <button onclick="goToScreen('module-list')" class="w-full py-3 rounded-2xl maroon-gradient text-white font-bold text-xs shadow-md">
+                        Mulai Modul Belajar <i class="ph-bold ph-arrow-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 6. SCREEN: MODULE LIST -->
+            <section id="screen-module-list" class="screen-panel flex flex-col justify-between p-5 bg-gray-50/50">
+                <div class="overflow-y-auto custom-scroll pr-1 space-y-3 flex-grow">
+                    <div class="flex items-center justify-between">
+                        <button onclick="goToScreen('dashboard')" class="text-gray-400 hover:text-bali-maroon text-xs font-medium flex items-center gap-1">
+                            <i class="ph-bold ph-arrow-left"></i> Beranda
+                        </button>
+                        <h2 class="text-sm font-serif font-bold text-bali-dark">Daftar Modul Belajar</h2>
+                    </div>
+
+                    <p class="text-[11px] text-gray-500">Pilih modul di bawah ini, baca materinya, kerjakan latihan formatif dengan umpan balik benar/salah, dan tandai selesai.</p>
+
+                    <div id="moduleCardsContainer" class="space-y-2.5 pb-2">
+                        <!-- Dynamic Module Cards -->
+                    </div>
+                </div>
+                <div class="pt-2 shrink-0">
+                    <button onclick="goToScreen('dashboard')" class="w-full py-3 rounded-2xl bg-white border border-gray-300 text-gray-700 font-bold text-xs shadow-sm">
+                        Kembali ke Beranda
+                    </button>
+                </div>
+            </section>
+
+            <!-- 7. SCREEN: MODULE SLIDE VIEWER -->
+            <section id="screen-module-slide" class="screen-panel flex flex-col justify-between p-5 bg-white">
+                <div class="flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-2 shrink-0">
+                        <button onclick="goToScreen('module-list')" class="text-xs font-bold text-gray-400 hover:text-bali-maroon flex items-center gap-1">
+                            <i class="ph-bold ph-x"></i> Keluar Modul
+                        </button>
+                        <span id="modSlideIndicator" class="px-2.5 py-0.5 rounded-full bg-bali-cream text-bali-maroon text-[11px] font-bold">Modul 1 • Bagian 1/3</span>
+                    </div>
+
+                    <h3 id="modTitleHeading" class="text-base font-serif font-bold text-bali-dark mb-1 shrink-0">Judul Modul</h3>
+                    <h4 id="modSubtitleHeading" class="text-xs font-bold text-bali-gold mb-3 shrink-0">Subjudul</h4>
+
+                    <div class="bg-gray-50 border border-gray-200/80 rounded-2xl p-4 flex-grow overflow-y-auto custom-scroll text-xs text-gray-700 leading-relaxed space-y-3 mb-3" id="modContentBody">
+                        <!-- Dynamic content -->
+                    </div>
+
+                    <div class="pt-2 border-t border-gray-100 flex items-center justify-between gap-2 shrink-0">
+                        <button id="btnPrevSlide" onclick="navigateModuleSlide(-1)" class="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs hover:bg-gray-200 flex items-center gap-1">
+                            <i class="ph-bold ph-arrow-left"></i> Sebelumnya
+                        </button>
+                        <button id="btnNextSlide" onclick="navigateModuleSlide(1)" class="flex-grow py-2.5 rounded-xl maroon-gradient text-white font-bold text-xs shadow-md flex items-center justify-center gap-1">
+                            Lanjut <i class="ph-bold ph-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. SCREEN: FORMATIVE PRACTICE EXERCISE WITH TRUE/FALSE FEEDBACK -->
+            <section id="screen-formative" class="screen-panel flex flex-col justify-between p-5 bg-white">
+                <div class="flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-2 shrink-0">
+                        <button onclick="goToScreen('module-list')" class="text-xs text-gray-400 font-bold flex items-center gap-1">
+                            <i class="ph-bold ph-x"></i> Tutup Latihan
+                        </button>
+                        <span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold" id="formativeCounter">Latihan 1 dari 3</span>
+                    </div>
+
+                    <div class="flex items-center justify-between mb-1 shrink-0">
+                        <h3 class="text-xs font-bold text-bali-maroon uppercase tracking-wider">Latihan Formatif (Benar / Salah)</h3>
+                        <span id="formativeScoreStatus" class="text-[11px] font-bold text-gray-500">Skor: 0/3</span>
+                    </div>
+                    
+                    <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 mb-3 shrink-0">
+                        <p id="formativeQuestionText" class="text-xs font-semibold text-gray-800 leading-relaxed">Pertanyaan formatif...</p>
+                    </div>
+
+                    <div class="space-y-2 overflow-y-auto custom-scroll flex-grow pr-1" id="formativeOptionsContainer">
+                        <!-- Options generated here -->
+                    </div>
+
+                    <!-- Instant True/False Feedback Box -->
+                    <div id="formativeFeedbackBox" class="hidden p-3 rounded-xl text-xs mt-2 shrink-0"></div>
+
+                    <div class="pt-2 border-t border-gray-100 flex justify-between gap-2 shrink-0 mt-2">
+                        <button id="formativeBtnPrev" onclick="navigateFormative(-1)" class="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs">
+                            <i class="ph-bold ph-arrow-left"></i>
+                        </button>
+                        <button id="formativeBtnNext" onclick="navigateFormative(1)" class="flex-grow py-2.5 rounded-xl bg-bali-dark text-white font-bold text-xs shadow-md">
+                            Selanjutnya <i class="ph-bold ph-arrow-right"></i>
+                        </button>
+                        <button id="formativeBtnFinish" onclick="finishFormative()" class="hidden flex-grow py-2.5 rounded-xl gold-gradient text-white font-bold text-xs shadow-md">
+                            Selesaikan Modul <i class="ph-bold ph-check"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. SCREEN: FINAL QUIZ WITH TRUE/FALSE & EXPLANATION -->
+            <section id="screen-quiz" class="screen-panel flex flex-col justify-between p-5 bg-white">
+                <div class="flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-2 shrink-0">
+                        <button onclick="goToScreen('dashboard')" class="text-xs text-gray-400 font-bold flex items-center gap-1">
+                            <i class="ph-bold ph-x"></i> Keluar Kuis
+                        </button>
+                        <span class="px-2.5 py-0.5 rounded-full bg-bali-cream text-bali-maroon text-[11px] font-bold" id="quizCounter">Soal 1 dari 10</span>
+                    </div>
+
+                    <div class="flex items-center justify-between mb-1 shrink-0">
+                        <h3 class="text-xs font-bold text-bali-dark uppercase tracking-wider">Kuis Akhir (Evaluasi Resmi)</h3>
+                        <span id="quizInstantBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600">Pilih Jawaban</span>
+                    </div>
+
+                    <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 mb-3 shrink-0">
+                        <h3 id="quizQuestionText" class="text-xs font-semibold text-gray-800 leading-relaxed">Pertanyaan kuis akhir...</h3>
+                    </div>
+
+                    <div class="space-y-2 overflow-y-auto custom-scroll flex-grow pr-1" id="quizOptionsContainer">
+                        <!-- Options generated here -->
+                    </div>
+
+                    <!-- Instant feedback box during quiz taking -->
+                    <div id="quizFeedbackBox" class="hidden p-3 rounded-xl text-xs mt-2 shrink-0"></div>
+
+                    <div class="pt-2 border-t border-gray-100 flex justify-between gap-2 shrink-0 mt-2">
+                        <button id="quizBtnPrev" onclick="navigateQuiz(-1)" class="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs">
+                            <i class="ph-bold ph-arrow-left"></i>
+                        </button>
+                        <button id="quizBtnNext" onclick="navigateQuiz(1)" class="flex-grow py-2.5 rounded-xl bg-bali-dark text-white font-bold text-xs shadow-md">
+                            Selanjutnya <i class="ph-bold ph-arrow-right"></i>
+                        </button>
+                        <button id="quizBtnSubmit" onclick="submitFinalQuiz()" class="hidden flex-grow py-2.5 rounded-xl gold-gradient text-white font-bold text-xs shadow-lg">
+                            Kumpulkan & Lihat Nilai <i class="ph-bold ph-paper-plane-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 10. SCREEN: RESULT & REVIEW (TRUE/FALSE SUMMARY) -->
+            <section id="screen-result" class="screen-panel flex flex-col justify-between p-5 bg-gray-50/50">
+                <div class="overflow-y-auto custom-scroll pr-1 space-y-3.5 flex-grow">
+                    <div class="text-center pt-1">
+                        <div class="w-14 h-14 rounded-2xl gold-gradient text-white mx-auto flex items-center justify-center text-2xl shadow-md mb-2">
+                            <i class="ph-fill ph-trophy"></i>
+                        </div>
+                        <h2 class="text-lg font-serif font-bold text-bali-dark">Hasil Evaluasi Kuis</h2>
+                        <p class="text-[11px] text-gray-500" id="resStudentInfo">Nama • Kelas</p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 text-center border-t-4 border-t-bali-maroon shadow-sm">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nilai Akhir Kuis</span>
+                        <div class="text-5xl font-bold text-bali-dark my-1" id="resScoreNum">0</div>
+                        <div class="inline-block px-3 py-0.5 rounded-full text-[11px] font-bold mb-2" id="resCategoryBadge">Kategori</div>
+                        <p class="text-[11px] text-gray-600" id="resStatsDetail">Benar: 0 | Salah: 0</p>
+                    </div>
+
+                    <div class="bg-bali-cream text-bali-maroon rounded-xl p-3 text-[11px] font-medium text-center border border-amber-200" id="resFeedbackText">
+                        Pesan motivasi...
+                    </div>
+
+                    <!-- Detailed True/False Answers Review Accordion / Box -->
+                    <div class="bg-white rounded-2xl p-4 border border-gray-200">
+                        <h4 class="font-bold text-gray-800 text-xs mb-2 flex items-center gap-1.5">
+                            <i class="ph-fill ph-check-square text-bali-gold"></i> Rekapitulasi Status Benar / Salah
+                        </h4>
+                        <div id="quizReviewList" class="space-y-2.5">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 border border-gray-200">
+                        <h4 class="font-bold text-gray-800 text-xs mb-1 flex items-center gap-1.5">
+                            <i class="ph-fill ph-notebook text-bali-gold"></i> Jurnal Refleksi Siswa
+                        </h4>
+                        <p class="text-[10px] text-gray-500 mb-2">Tuliskan pemahaman yang dapat kamu terapkan dalam kehidupan sehari-hari:</p>
+                        <textarea id="reflectionInput" class="w-full p-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-bali-maroon outline-none min-h-[70px] mb-2 bg-gray-50" placeholder="Apa nilai Sad Darsana yang paling berkesan bagimu?"></textarea>
+                        <button onclick="saveReflection()" class="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition-colors">
+                            Simpan Jurnal Refleksi
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-2 shrink-0 flex gap-2">
+                    <button onclick="startFinalQuiz()" class="flex-1 py-3 bg-white border border-bali-maroon text-bali-maroon font-bold text-xs rounded-xl hover:bg-red-50">
+                        Coba Lagi Kuis
+                    </button>
+                    <button onclick="goToScreen('dashboard')" class="flex-1 py-3 maroon-gradient text-white font-bold text-xs rounded-xl shadow-md">
+                        Ke Beranda
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script>
+        const schoolNameInput = "SMA Negeri 1 Gianyar";
+
+        // Modules Data with Formative Questions & Explanations
+        const modulesData = [
+            {
+                id: 'mod1',
+                title: "Modul 1: Pengenalan Darsana",
+                slides: [
+                    {
+                        subtitle: "Pengertian & Konsep Dasar",
+                        content: `
+                            <p>Kata <strong>Darsana</strong> berasal dari urat kata Sanskerta <em>'drs'</em> yang berarti <strong>melihat</strong>.</p>
+                            <p class="mt-2">Dalam konteks filsafat Hindu, Darsana berarti pandangan tentang kebenaran (truth view) atau sistem filsafat yang menuntun jiwa menuju kesadaran tertinggi.</p>
+                            <div class="bg-amber-50 border-l-4 border-bali-gold p-2.5 rounded-r-xl mt-2">
+                                <span class="font-bold text-bali-dark block text-[11px]">Tahukah Kamu?</span>
+                                Filsafat Hindu mengelompokkan sistem filsafat India menjadi dua kelompok berdasarkan pengakuannya terhadap otoritas Veda.
+                            </div>
+                        `
+                    },
+                    {
+                        subtitle: "Astika dan Nastika",
+                        content: `
+                            <p>Dua kelompok besar dalam sistem filsafat India:</p>
+                            <ul class="list-disc pl-4 space-y-1 mt-2 text-[11px]">
+                                <li><strong>Astika (Ortodoks):</strong> Kelompok yang mengakui otoritas kitab suci Veda. Terdiri dari 6 sistem utama yang disebut <em>Sad Darsana</em>.</li>
+                                <li><strong>Nastika (Heterodoks):</strong> Kelompok yang tidak mengakui otoritas Veda (seperti Carvaka, Jaina, dan Buddha).</li>
+                            </ul>
+                        `
+                    },
+                    {
+                        subtitle: "Tujuan Mempelajari Darsana",
+                        content: `
+                            <p>Tujuan utama mempelajari Sad Darsana adalah untuk:</p>
+                            <ul class="list-disc pl-4 space-y-1 mt-2 text-[11px]">
+                                <li>Memahami hakikat kebenaran sejati dan menghilangkan ketidaktahuan (Avidya).</li>
+                                <li>Melepaskan diri dari ikatan keduniawian dan siklus penderitaan (Samsara).</li>
+                                <li>Mencapai kebebasan spiritual tertinggi (<strong>Moksa</strong>).</li>
+                            </ul>
+                        `
+                    }
+                ],
+                formative: [
+                    { q: "Kata Darsana berasal dari akar kata 'drs' yang berarti...", options: ["Mendengar", "Melihat", "Berpikir", "Menulis"], correct: 1, explanation: "Drs berarti melihat atau pandangan." },
+                    { q: "Kelompok filsafat yang mengakui otoritas kitab suci Veda disebut...", options: ["Nastika", "Carvaka", "Astika", "Buddhisme"], correct: 2, explanation: "Astika adalah kelompok ortodoks yang mengakui otoritas Veda." },
+                    { q: "Enam sistem filsafat ortodoks dalam Hindu dikenal dengan nama...", options: ["Sad Darsana", "Catur Marga", "Tri Kona", "Panca Sradha"], correct: 0, explanation: "Sad artinya enam, Darsana artinya pandangan filsafat." }
+                ]
+            },
+            {
+                id: 'mod2',
+                title: "Modul 2: Nyaya & Vaiseshika",
+                slides: [
+                    {
+                        subtitle: "Nyaya Darsana (Logika)",
+                        content: `
+                            <p>Didirikan oleh <strong>Rsi Gautama</strong>. Nyaya menekankan pentingnya logika, penalaran analitis, dan epistemologi untuk mencapai pengetahuan yang benar.</p>
+                            <p class="mt-2">Nyaya mengakui 4 sumber pengetahuan sah (Pramana): <em>Pratyaksa, Anumana, Upamana, dan Sabda</em>.</p>
+                        `
+                    },
+                    {
+                        subtitle: "Vaiseshika Darsana (Atomisme)",
+                        content: `
+                            <p>Didirikan oleh <strong>Rsi Kanada</strong>. Sistem ini berfokus pada analisis fisik alam semesta dan kategori realitas (Padartha).</p>
+                            <p class="mt-2">Vaiseshika terkenal dengan teori atomismenya (<em>Paramanu</em>), menyatakan seluruh objek material tersusun dari atom-atom kekal.</p>
+                        `
+                    },
+                    {
+                        subtitle: "Penerapan Bagi Remaja",
+                        content: `
+                            <div class="bg-blue-50 border border-blue-100 p-2.5 rounded-xl text-[11px]">
+                                <span class="font-bold text-blue-900 block mb-1">Aplikasi Sehari-hari:</span>
+                                Berpikir kritis, tidak mudah percaya hoax, serta mengamati fenomena alam secara rasional adalah cerminan Nyaya dan Vaiseshika.
+                            </div>
+                        `
+                    }
+                ],
+                formative: [
+                    { q: "Tokoh suci pendiri aliran Nyaya Darsana adalah...", options: ["Rsi Kapila", "Rsi Patanjali", "Rsi Gautama", "Rsi Jaimini"], correct: 2, explanation: "Rsi Gautama adalah pendiri Nyaya." },
+                    { q: "Vaiseshika Darsana terkenal dengan teori penyusun alam semesta yaitu...", options: ["Paramanu (Atom)", "Purusa", "Prakrti", "Maya"], correct: 0, explanation: "Paramanu adalah konsep atom dalam Vaiseshika." },
+                    { q: "Metode penalaran inferensi dalam Nyaya disebut...", options: ["Pratyaksa", "Anumana", "Sabda", "Upamana"], correct: 1, explanation: "Anumana adalah inferensi atau penyimpulan." }
+                ]
+            },
+            {
+                id: 'mod3',
+                title: "Modul 3: Samkhya & Yoga",
+                slides: [
+                    {
+                        subtitle: "Samkhya Darsana (Dualisme)",
+                        content: `
+                            <p>Didirikan oleh <strong>Rsi Kapila</strong>. Merupakan sistem dualistik yang membedakan realitas menjadi dua prinsip:</p>
+                            <ul class="list-disc pl-4 space-y-1 mt-1 text-[11px]">
+                                <li><strong>Purusa:</strong> Kesadaran murni / Roh.</li>
+                                <li><strong>Prakrti:</strong> Materi purba alam semesta (Tri Guna).</li>
+                            </ul>
+                        `
+                    },
+                    {
+                        subtitle: "Yoga Darsana (Pengendalian Pikiran)",
+                        content: `
+                            <p>Didirikan oleh <strong>Rsi Patanjali</strong>. Yoga didefinisikan sebagai <em>Yogas citta vrtti nirodhah</em> (pengendalian gejolak pikiran).</p>
+                            <p class="mt-2">Terkenal dengan ajaran <strong>Astanga Yoga</strong> (delapan tahapan yoga).</p>
+                        `
+                    },
+                    {
+                        subtitle: "Penerapan Disiplin Diri",
+                        content: `
+                            <div class="bg-green-50 border border-green-100 p-2.5 rounded-xl text-[11px]">
+                                Melatih konsentrasi belajar, menjaga ketenangan emosi, dan menerapkan disiplin diri membantu remaja mengelola stres positif.
+                            </div>
+                        `
+                    }
+                ],
+                formative: [
+                    { q: "Prinsip kesadaran murni dalam filsafat Samkhya disebut...", options: ["Prakrti", "Purusa", "Paramanu", "Brahman"], correct: 1, explanation: "Purusa adalah unsur kesadaran murni." },
+                    { q: "Delapan tahapan yoga menurut Rsi Patanjali disebut...", options: ["Sad Darsana", "Astanga Yoga", "Catur Marga", "Tri Sandhya"], correct: 1, explanation: "Astanga Yoga terdiri dari 8 tahapan." },
+                    { q: "Definisi yoga menurut Rsi Patanjali adalah penghentian...", options: ["Gerak tubuh", "Gejolak pikiran (Citta Vrtti)", "Pekerjaan", "Nafsu makan"], correct: 1, explanation: "Yogas citta vrtti nirodhah." }
+                ]
+            },
+            {
+                id: 'mod4',
+                title: "Modul 4: Mimamsa & Vedanta",
+                slides: [
+                    {
+                        subtitle: "Mimamsa (Purva Mimamsa)",
+                        content: `
+                            <p>Didirikan oleh <strong>Rsi Jaimini</strong>. Berfokus pada bagian ritual Veda (<em>Karma Kanda</em>).</p>
+                            <p class="mt-2">Mimamsa menekankan bahwa pelaksanaan kewajiban keagamaan dan yadnya berdasarkan aturan Veda adalah jalan utama menuju keharmonisan.</p>
+                        `
+                    },
+                    {
+                        subtitle: "Vedanta (Uttara Mimamsa)",
+                        content: `
+                            <p>Dirintis oleh <strong>Rsi Badarayana</strong>. Berakar dari bagian akhir Veda, yaitu Upanisad (<em>Jnana Kanda</em>).</p>
+                            <p class="mt-2">Fokus pada hubungan antara Brahman (Tuhan Yang Maha Esa) dan Atman (jiwa individu).</p>
+                        `
+                    },
+                    {
+                        subtitle: "Relevansi Nilai Keagamaan",
+                        content: `
+                            <div class="bg-amber-50 p-2.5 rounded-xl text-[11px]">
+                                Melaksanakan persembahyangan rutin dan memahami makna filosofis yadnya mencerminkan perpaduan Mimamsa dan Vedanta.
+                            </div>
+                        `
+                    }
+                ],
+                formative: [
+                    { q: "Sistem filsafat yang menitikberatkan pada bagian ritual Veda (Karma Kanda) adalah...", options: ["Mimamsa", "Nyaya", "Yoga", "Samkhya"], correct: 0, explanation: "Mimamsa berfokus pada ritual Veda." },
+                    { q: "Kitab yang menjadi sumber utama ajaran Vedanta adalah...", options: ["Itihasa", "Upanisad", "Purana", "Smerti"], correct: 1, explanation: "Upanisad adalah bagian akhir Veda (Vedanta)." },
+                    { q: "Tokoh utama perintis Vedanta adalah...", options: ["Rsi Jaimini", "Rsi Badarayana", "Rsi Kapila", "Rsi Kanada"], correct: 1, explanation: "Rsi Badarayana menyusun Brahma Sutra (Vedanta)." }
+                ]
+            },
+            {
+                id: 'mod5',
+                title: "Modul 5: Rangkuman & Penerapan",
+                slides: [
+                    {
+                        subtitle: "Rangkuman Sad Darsana",
+                        content: `
+                            <p>Keenam sistem filsafat (Sad Darsana) yaitu <em>Nyaya, Vaiseshika, Samkhya, Yoga, Mimamsa, dan Vedanta</em> saling melengkapi sebagai panduan hidup umat Hindu.</p>
+                            <p class="mt-2">Seluruhnya bermuara pada satu tujuan luhur: pembebasan rohani (Moksa) dan kedamaian batin.</p>
+                        `
+                    },
+                    {
+                        subtitle: "Kesimpulan & Refleksi",
+                        content: `
+                            <div class="bg-bali-cream border border-bali-gold p-2.5 rounded-xl text-bali-dark text-[11px]">
+                                <strong>Luar Biasa!</strong> Kamu telah meninjau seluruh materi Sad Darsana. Silakan tandai modul ini selesai untuk membuka Kuis Akhir.
+                            </div>
+                        `
+                    }
+                ],
+                formative: [
+                    { q: "Berapa jumlah total aliran dalam sistem Sad Darsana ortodoks?", options: ["4", "5", "6", "8"], correct: 2, explanation: "Sad berarti enam." },
+                    { q: "Tujuan akhir dari seluruh ajaran Sad Darsana adalah tercapainya...", options: ["Kekayaan", "Moksa (Kebebasan Spiritual)", "Kekuasaan", "Popularitas"], correct: 1, explanation: "Moksa adalah tujuan tertinggi." },
+                    { q: "Sikap remaja Hindu dalam menyikapi keragaman pandangan filsafat adalah...", options: ["Fanatik sempit", "Saling menghargai & berpikir bijak", "Menolak", "Acuh tak acuh"], correct: 1, explanation: "Kebijaksanaan dan toleransi." }
+                ]
+            }
+        ];
+
+        // 10 Final Quiz Questions with Explanations
+        const finalQuizQuestions = [
+            { q: "Kata Darsana berasal dari urat kata Sanskerta 'drs' yang berarti...", options: ["Mendengar", "Melaksanakan", "Melihat", "Menulis"], correct: 2, explanation: "Drs berarti melihat atau pandangan." },
+            { q: "Tokoh suci pendiri dari aliran filsafat Yoga adalah...", options: ["Rsi Jaimini", "Rsi Patanjali", "Rsi Kanada", "Rsi Gautama"], correct: 1, explanation: "Rsi Patanjali adalah penyusun Yoga Sutra." },
+            { q: "Kelompok filsafat Hindu yang mengakui otoritas kitab suci Veda disebut...", options: ["Nastika", "Carvaka", "Astika", "Upanisad"], correct: 2, explanation: "Astika adalah kelompok ortodoks yang mengakui Veda." },
+            { q: "Pramana atau cara memperoleh pengetahuan melalui persepsi langsung indra disebut...", options: ["Anumana", "Sabda", "Upamana", "Pratyaksa"], correct: 3, explanation: "Pratyaksa adalah pengamatan atau persepsi langsung." },
+            { q: "Vaiseshika terkenal dengan teori atomismenya yang disebut...", options: ["Paramanu", "Prakrti", "Purusa", "Padartha"], correct: 0, explanation: "Paramanu merupakan konsep atom terkecil." },
+            { q: "Dua asas utama dalam sistem filsafat Samkhya adalah...", options: ["Brahman & Atman", "Purusa & Prakrti", "Yama & Niyama", "Nyaya & Vaiseshika"], correct: 1, explanation: "Purusa (roh) dan Prakrti (materi)." },
+            { q: "Delapan tahapan yoga yang diajarkan oleh Rsi Patanjali disebut...", options: ["Sad Darsana", "Astanga Yoga", "Catur Marga", "Tri Kona"], correct: 1, explanation: "Astanga Yoga terdiri dari 8 tahapan." },
+            { q: "Sistem filsafat yang menitikberatkan pada pelaksanaan ritual suci (Karma Kanda) adalah...", options: ["Mimamsa", "Nyaya", "Yoga", "Samkhya"], correct: 0, explanation: "Mimamsa berfokus pada ritual Veda." },
+            { q: "Aliran non-dualisme absolut dalam Vedanta yang dipelopori Adi Shankaracharya adalah...", options: ["Dvaita", "Visistadvaita", "Advaita Vedanta", "Sankhya"], correct: 2, explanation: "Advaita Vedanta mengajarkan non-dualisme." },
+            { q: "Tujuan akhir dari seluruh sistem ajaran Sad Darsana adalah tercapainya...", options: ["Kekayaan", "Moksa", "Kesenian", "Kekuasaan"], correct: 1, explanation: "Moksa adalah kebebasan rohani tertinggi." }
+        ];
+
+        // App Runtime State
+        let appState = {
+            student: { name: "", absen: "", kelas: "" },
+            progress: { mod1: false, mod2: false, mod3: false, mod4: false, mod5: false },
+            quiz: { score: null, lastTaken: null }
+        };
+
+        let currentModIndex = 0;
+        let currentSlideIndex = 0;
+        
+        let currentFormativeIndex = 0;
+        let formativeUserAnswers = {}; // stores selected option per formative question index
+
+        let currentQuizIndex = 0;
+        let quizUserAnswers = new Array(10).fill(null);
+
+        // --- LOCAL STORAGE ---
+        function saveAppData() {
+            localStorage.setItem('mpi_darsana_app_state', JSON.stringify(appState));
+        }
+
+        function loadAppData() {
+            const saved = localStorage.getItem('mpi_darsana_app_state');
+            if (saved) {
+                appState = JSON.parse(saved);
+                return true;
+            }
+            return false;
+        }
+
+        // --- MODAL UTILS ---
+        function showModal(title, msg, isSuccess = false) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = msg;
+            const iconBox = document.getElementById('modalIconBox');
+            if (isSuccess) {
+                iconBox.className = "w-14 h-14 rounded-full bg-green-100 text-green-600 mx-auto flex items-center justify-center text-2xl mb-3 shadow-inner";
+                iconBox.innerHTML = '<i class="ph-fill ph-check-circle"></i>';
+            } else {
+                iconBox.className = "w-14 h-14 rounded-full bg-bali-cream text-bali-maroon mx-auto flex items-center justify-center text-2xl mb-3 shadow-inner";
+                iconBox.innerHTML = '<i class="ph-fill ph-info"></i>';
+            }
+            document.getElementById('customModal').classList.remove('hidden');
+            document.getElementById('customModal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.remove('flex');
+            document.getElementById('customModal').classList.add('hidden');
+        }
+
+        // --- ROUTER ---
+        function goToScreen(screenName) {
+            document.querySelectorAll('.screen-panel').forEach(s => s.classList.remove('active'));
+            document.getElementById(`screen-${screenName}`).classList.add('active');
+
+            const header = document.getElementById('appHeader');
+            if (['cover', 'identity', 'instructions'].includes(screenName)) {
+                header.classList.add('hidden');
+            } else {
+                header.classList.remove('hidden');
+                document.getElementById('hdrStudentName').innerText = appState.student.name || "Siswa";
+                document.getElementById('hdrStudentClass').innerText = appState.student.kelas || "-";
+                document.getElementById('hdrStudentAbsen').innerText = appState.student.absen || "-";
+            }
+
+            if (screenName === 'dashboard') updateDashboardUI();
+            if (screenName === 'module-list') renderModuleListUI();
+        }
+
+        function handleBackFromIdentity() {
+            if (appState.student.name) {
+                goToScreen('dashboard');
+            } else {
+                goToScreen('cover');
+            }
+        }
+
+        // --- DROPDOWN ---
+        function toggleKelasDropdown(show) {
+            const dropdown = document.getElementById('kelasDropdown');
+            if (show) dropdown.classList.add('show');
+            else dropdown.classList.remove('show');
+        }
+
+        function selectKelas(val) {
+            document.getElementById('inputKelas').value = val;
+            toggleKelasDropdown(false);
+        }
+
+        function filterKelasDropdown() {
+            toggleKelasDropdown(true);
+        }
+
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('#inputKelas') && !e.target.closest('#kelasDropdown')) {
+                toggleKelasDropdown(false);
+            }
+        });
+
+        // --- IDENTITY ---
+        function saveIdentity(e) {
+            e.preventDefault();
+            const name = document.getElementById('inputName').value.trim();
+            const absen = parseInt(document.getElementById('inputAbsen').value);
+            const kelas = document.getElementById('inputKelas').value.trim();
+
+            if (!name || isNaN(absen) || absen <= 0 || !kelas) {
+                showModal("Data Belum Lengkap", "Harap isi Nama Lengkap, Nomor Absen valid, dan Kelas.");
+                return;
+            }
+
+            appState.student = { name, absen, kelas };
+            saveAppData();
+            goToScreen('dashboard');
+        }
+
+        // --- DASHBOARD UI ---
+        function updateDashboardUI() {
+            document.getElementById('dashGreeting').innerText = `Om Swastyastu, ${appState.student.name.split(" ")[0]}!`;
+            document.getElementById('dashAbsen').innerText = appState.student.absen;
+            document.getElementById('dashClass').innerText = appState.student.kelas;
+
+            let finishedCount = 0;
+            for (let m in appState.progress) {
+                if (appState.progress[m]) finishedCount++;
+            }
+
+            const pct = Math.round((finishedCount / 5) * 100);
+            document.getElementById('dashProgressPct').innerText = pct + "%";
+            document.getElementById('dashProgressText').innerText = `${finishedCount} dari 5 Modul Selesai`;
+            document.getElementById('dashProgressBar').style.width = pct + "%";
+
+            const stateBadge = document.getElementById('badgeLearningState');
+            if (pct === 0) {
+                stateBadge.innerText = "Belum Memulai";
+                stateBadge.className = "px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 font-semibold";
+            } else if (pct < 100) {
+                stateBadge.innerText = "Sedang Belajar";
+                stateBadge.className = "px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 font-semibold";
+            } else {
+                stateBadge.innerText = "Materi Selesai";
+                stateBadge.className = "px-2 py-0.5 rounded-md bg-green-50 text-green-700 font-semibold";
+            }
+
+            const quizCard = document.getElementById('dashQuizCard');
+            const quizIconBox = document.getElementById('dashQuizIconBox');
+            const quizIcon = document.getElementById('dashQuizIcon');
+            const quizTitle = document.getElementById('dashQuizTitle');
+            const quizDesc = document.getElementById('dashQuizDesc');
+            const quizBadge = document.getElementById('badgeQuizState');
+
+            if (pct === 100) {
+                quizCard.className = "bg-white hover:shadow-md border border-gray-100 rounded-2xl p-4 cursor-pointer flex items-center justify-between border-l-4 border-l-bali-red group transition-all";
+                quizIconBox.className = "w-12 h-12 rounded-2xl bg-red-100 text-bali-red flex items-center justify-center text-2xl group-hover:scale-105 transition-transform";
+                quizIcon.className = "ph-fill ph-exam";
+                quizTitle.innerText = "Kuis Akhir (Terbuka)";
+                quizDesc.innerText = appState.quiz.score !== null ? `Nilai Terakhir: ${appState.quiz.score}` : "Semua modul selesai. Siap diuji!";
+                quizBadge.innerHTML = `<i class="ph-fill ph-unlock"></i> Kuis Terbuka`;
+                quizBadge.className = "px-2 py-0.5 rounded-md bg-green-50 text-green-700 font-semibold flex items-center gap-1";
+            } else {
+                quizCard.className = "bg-white border border-gray-100 rounded-2xl p-4 cursor-pointer flex items-center justify-between border-l-4 border-l-gray-300 group transition-all";
+                quizIconBox.className = "w-12 h-12 rounded-2xl bg-gray-100 text-gray-400 flex items-center justify-center text-2xl";
+                quizIcon.className = "ph-fill ph-lock-key";
+                quizTitle.innerText = "Kuis Akhir";
+                quizDesc.innerText = "Selesaikan seluruh modul belajar untuk membuka kuis.";
+                quizBadge.innerHTML = `<i class="ph-fill ph-lock-key"></i> Kuis Terkunci`;
+                quizBadge.className = "px-2 py-0.5 rounded-md bg-red-50 text-bali-maroon font-semibold flex items-center gap-1";
+            }
+        }
+
+        function handleDashboardQuizClick() {
+            let finishedCount = 0;
+            for (let m in appState.progress) {
+                if (appState.progress[m]) finishedCount++;
+            }
+            if (finishedCount < 5) {
+                showModal("Kuis Terkunci", "Harap selesaikan kelima modul pembelajaran hingga 100% terlebih dahulu sebelum mengakses Kuis Akhir.");
+                return;
+            }
+            startFinalQuiz();
+        }
+
+        // --- MODULE LIST ---
+        function renderModuleListUI() {
+            const container = document.getElementById('moduleCardsContainer');
+            container.innerHTML = "";
+
+            modulesData.forEach((mod, idx) => {
+                const isDone = appState.progress[mod.id];
+                const cardBg = isDone ? 'bg-green-50/40 border-green-200' : 'bg-white border-gray-200 hover:border-bali-gold';
+                const iconColor = isDone ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-800';
+                const statusLabel = isDone ? 'Selesai' : 'Mulai Belajar';
+
+                container.innerHTML += `
+                    <div onclick="openModule(${idx})" class="border ${cardBg} rounded-2xl p-3.5 cursor-pointer flex items-center justify-between group transition-all shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl ${iconColor} flex items-center justify-center font-bold text-xs shrink-0">
+                                ${idx + 1}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-xs">${mod.title}</h4>
+                                <p class="text-[10px] text-gray-500">${isDone ? 'Telah tuntas & terverifikasi' : 'Ketuk untuk membaca materi & latihan'}</p>
+                            </div>
+                        </div>
+                        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg ${isDone ? 'bg-green-100 text-green-800' : 'bg-bali-cream text-bali-maroon'} shrink-0">
+                            ${statusLabel} <i class="ph-bold ph-caret-right ml-0.5"></i>
+                        </span>
+                    </div>
+                `;
+            });
+        }
+
+        // --- MODULE SLIDES ---
+        function openModule(idx) {
+            currentModIndex = idx;
+            currentSlideIndex = 0;
+            renderModuleSlide();
+            goToScreen('module-slide');
+        }
+
+        function renderModuleSlide() {
+            const mod = modulesData[currentModIndex];
+            const totalSlides = mod.slides.length;
+
+            document.getElementById('modTitleHeading').innerText = mod.title;
+            document.getElementById('modSlideIndicator').innerText = `Bagian ${currentSlideIndex + 1} dari ${totalSlides}`;
+
+            if (currentSlideIndex < totalSlides) {
+                const slide = mod.slides[currentSlideIndex];
+                document.getElementById('modSubtitleHeading').innerText = slide.subtitle;
+                document.getElementById('modContentBody').innerHTML = slide.content;
+
+                document.getElementById('btnPrevSlide').style.display = currentSlideIndex === 0 ? 'none' : 'flex';
+                document.getElementById('btnNextSlide').innerHTML = currentSlideIndex === totalSlides - 1 ? `Lanjut ke Latihan Formatif <i class="ph-bold ph-arrow-right ml-1"></i>` : `Lanjut <i class="ph-bold ph-arrow-right ml-1"></i>`;
+            }
+        }
+
+        function navigateModuleSlide(dir) {
+            const mod = modulesData[currentModIndex];
+            if (dir === 1) {
+                if (currentSlideIndex < mod.slides.length - 1) {
+                    currentSlideIndex++;
+                    renderModuleSlide();
+                } else {
+                    startFormative(currentModIndex);
+                }
+            } else {
+                if (currentSlideIndex > 0) {
+                    currentSlideIndex--;
+                    renderModuleSlide();
+                }
+            }
+        }
+
+        // --- FORMATIVE PRACTICE WITH TRUE/FALSE VALIDATION ---
+        function startFormative(modIdx) {
+            currentFormativeIndex = 0;
+            formativeUserAnswers = {};
+            renderFormativeQuestion();
+            goToScreen('formative');
+        }
+
+        function renderFormativeQuestion() {
+            const mod = modulesData[currentModIndex];
+            const qList = mod.formative;
+            const q = qList[currentFormativeIndex];
+
+            document.getElementById('formativeCounter').innerText = `Latihan ${currentFormativeIndex + 1} dari ${qList.length}`;
+            document.getElementById('formativeQuestionText').innerText = q.q;
+
+            let correctSoFar = 0;
+            for (let i in formativeUserAnswers) {
+                if (formativeUserAnswers[i] === qList[i].correct) correctSoFar++;
+            }
+            document.getElementById('formativeScoreStatus').innerText = `Skor: ${correctSoFar}/${qList.length}`;
+
+            const optContainer = document.getElementById('formativeOptionsContainer');
+            optContainer.innerHTML = "";
+
+            const feedbackBox = document.getElementById('formativeFeedbackBox');
+            const selectedAns = formativeUserAnswers[currentFormativeIndex];
+
+            q.options.forEach((optText, oIdx) => {
+                let borderClass = 'border-gray-200 hover:bg-gray-50';
+                let iconHtml = `<div class="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-bold text-[11px] shrink-0">${String.fromCharCode(65 + oIdx)}</div>`;
+                let truthBadge = "";
+
+                if (selectedAns !== undefined) {
+                    if (oIdx === q.correct) {
+                        borderClass = 'border-green-500 bg-green-50 text-green-900 font-bold';
+                        iconHtml = `<div class="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-xs shrink-0"><i class="ph-bold ph-check"></i></div>`;
+                        truthBadge = `<span class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded bg-green-600 text-white">BENAR</span>`;
+                    } else if (oIdx === selectedAns) {
+                        borderClass = 'border-red-500 bg-red-50 text-red-900';
+                        iconHtml = `<div class="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center text-xs shrink-0"><i class="ph-bold ph-x"></i></div>`;
+                        truthBadge = `<span class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded bg-red-600 text-white">SALAH</span>`;
+                    }
+                }
+
+                optContainer.innerHTML += `
+                    <div onclick="selectFormativeOption(${oIdx})" class="p-3 rounded-xl border ${borderClass} cursor-pointer transition-all flex items-center gap-2.5">
+                        ${iconHtml}
+                        <span class="text-xs text-gray-700">${optText}</span>
+                        ${truthBadge}
+                    </div>
+                `;
+            });
+
+            if (selectedAns !== undefined) {
+                if (selectedAns === q.correct) {
+                    feedbackBox.className = "p-3 rounded-xl text-xs mt-2 bg-green-50 border border-green-200 text-green-800 flex items-start gap-2";
+                    feedbackBox.innerHTML = `<i class="ph-fill ph-check-circle text-base text-green-600 shrink-0 mt-0.5"></i><div><strong>BENAR!</strong> ${q.explanation}</div>`;
+                } else {
+                    feedbackBox.className = "p-3 rounded-xl text-xs mt-2 bg-red-50 border border-red-200 text-red-800 flex items-start gap-2";
+                    feedbackBox.innerHTML = `<i class="ph-fill ph-x-circle text-base text-red-600 shrink-0 mt-0.5"></i><div><strong>SALAH.</strong> Jawaban yang benar adalah <em>${q.options[q.correct]}</em>. ${q.explanation}</div>`;
+                }
+                feedbackBox.classList.remove('hidden');
+            } else {
+                feedbackBox.classList.add('hidden');
+            }
+
+            document.getElementById('formativeBtnPrev').style.display = currentFormativeIndex === 0 ? 'none' : 'flex';
+            
+            const isLast = currentFormativeIndex === qList.length - 1;
+            document.getElementById('formativeBtnNext').style.display = isLast ? 'none' : 'flex';
+            document.getElementById('formativeBtnFinish').style.display = isLast ? 'flex' : 'none';
+        }
+
+        function selectFormativeOption(oIdx) {
+            if (formativeUserAnswers[currentFormativeIndex] !== undefined) return;
+            formativeUserAnswers[currentFormativeIndex] = oIdx;
+            renderFormativeQuestion();
+        }
+
+        function navigateFormative(dir) {
+            const mod = modulesData[currentModIndex];
+            if (dir === 1 && formativeUserAnswers[currentFormativeIndex] === undefined) {
+                showModal("Pilih Jawaban", "Silakan pilih salah satu opsi latihan terlebih dahulu untuk melihat status benar/salah.");
+                return;
+            }
+            currentFormativeIndex += dir;
+            renderFormativeQuestion();
+        }
+
+        function finishFormative() {
+            const mod = modulesData[currentModIndex];
+            if (formativeUserAnswers[currentFormativeIndex] === undefined) {
+                showModal("Pilih Jawaban", "Silakan jawab soal terakhir terlebih dahulu.");
+                return;
+            }
+
+            appState.progress[mod.id] = true;
+            saveAppData();
+
+            showModal("Modul Tuntas!", `Selamat! Modul ${currentModIndex + 1} (${mod.title}) berhasil diselesaikan.`, true);
+            setTimeout(() => {
+                closeModal();
+                goToScreen('module-list');
+            }, 1500);
+        }
+
+        // --- FINAL QUIZ SYSTEM WITH TRUE/FALSE REVIEW ---
+        function startFinalQuiz() {
+            currentQuizIndex = 0;
+            quizUserAnswers = new Array(10).fill(null);
+            renderQuizQuestion();
+            goToScreen('quiz');
+        }
+
+        function renderQuizQuestion() {
+            const q = finalQuizQuestions[currentQuizIndex];
+            document.getElementById('quizCounter').innerText = `Soal ${currentQuizIndex + 1} dari 10`;
+            document.getElementById('quizQuestionText').innerText = `${currentQuizIndex + 1}. ${q.q}`;
+
+            const optContainer = document.getElementById('quizOptionsContainer');
+            optContainer.innerHTML = "";
+
+            const feedbackBox = document.getElementById('quizFeedbackBox');
+            const instantBadge = document.getElementById('quizInstantBadge');
+            const userAns = quizUserAnswers[currentQuizIndex];
+
+            q.options.forEach((optText, oIdx) => {
+                let borderClass = 'border-gray-200 hover:bg-gray-50';
+                let iconBg = 'bg-gray-100 text-gray-600';
+                let truthBadge = "";
+
+                if (userAns !== null) {
+                    if (oIdx === q.correct) {
+                        borderClass = 'border-green-500 bg-green-50 text-green-900 font-bold';
+                        iconBg = 'bg-green-600 text-white';
+                        truthBadge = `<span class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded bg-green-600 text-white">BENAR</span>`;
+                    } else if (oIdx === userAns) {
+                        borderClass = 'border-red-500 bg-red-50 text-red-900';
+                        iconBg = 'bg-red-600 text-white';
+                        truthBadge = `<span class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded bg-red-600 text-white">SALAH</span>`;
+                    }
+                } else if (userAns === oIdx) {
+                    borderClass = 'border-bali-maroon bg-amber-50 font-bold';
+                    iconBg = 'maroon-gradient text-white';
+                }
+
+                optContainer.innerHTML += `
+                    <div onclick="selectQuizOption(${oIdx})" class="p-3 rounded-xl border ${borderClass} cursor-pointer transition-all flex items-center gap-2.5">
+                        <div class="w-6 h-6 rounded-full ${iconBg} flex items-center justify-center font-bold text-[11px] shrink-0">
+                            ${String.fromCharCode(65 + oIdx)}
+                        </div>
+                        <span class="text-xs text-gray-700">${optText}</span>
+                        ${truthBadge}
+                    </div>
+                `;
+            });
+
+            if (userAns !== null) {
+                if (userAns === q.correct) {
+                    instantBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-green-100 text-green-800";
+                    instantBadge.innerText = "Status: BENAR";
+                    feedbackBox.className = "p-3 rounded-xl text-xs mt-2 bg-green-50 border border-green-200 text-green-800 flex items-start gap-2";
+                    feedbackBox.innerHTML = `<i class="ph-fill ph-check-circle text-base text-green-600 shrink-0 mt-0.5"></i><div><strong>BENAR!</strong> ${q.explanation}</div>`;
+                } else {
+                    instantBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-800";
+                    instantBadge.innerText = "Status: SALAH";
+                    feedbackBox.className = "p-3 rounded-xl text-xs mt-2 bg-red-50 border border-red-200 text-red-800 flex items-start gap-2";
+                    feedbackBox.innerHTML = `<i class="ph-fill ph-x-circle text-base text-red-600 shrink-0 mt-0.5"></i><div><strong>SALAH.</strong> Jawaban yang benar adalah <em>${q.options[q.correct]}</em>. ${q.explanation}</div>`;
+                }
+                feedbackBox.classList.remove('hidden');
+            } else {
+                instantBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600";
+                instantBadge.innerText = "Pilih Jawaban";
+                feedbackBox.classList.add('hidden');
+            }
+
+            document.getElementById('quizBtnPrev').style.display = currentQuizIndex === 0 ? 'none' : 'flex';
+            if (currentQuizIndex === 9) {
+                document.getElementById('quizBtnNext').style.display = 'none';
+                document.getElementById('quizBtnSubmit').style.display = 'flex';
+            } else {
+                document.getElementById('quizBtnNext').style.display = 'flex';
+                document.getElementById('quizBtnSubmit').style.display = 'none';
+            }
+        }
+
+        function selectQuizOption(oIdx) {
+            quizUserAnswers[currentQuizIndex] = oIdx;
+            renderQuizQuestion();
+        }
+
+        function navigateQuiz(dir) {
+            if (dir === 1 && quizUserAnswers[currentQuizIndex] === null) {
+                showModal("Pilih Jawaban", "Silakan pilih salah satu opsi jawaban kuis sebelum melanjutkan.");
+                return;
+            }
+            currentQuizIndex += dir;
+            renderQuizQuestion();
+        }
+
+        function submitFinalQuiz() {
+            if (quizUserAnswers[currentQuizIndex] === null) {
+                showModal("Pilih Jawaban", "Silakan pilih jawaban untuk soal terakhir ini.");
+                return;
+            }
+
+            let correctCount = 0;
+            quizUserAnswers.forEach((ans, idx) => {
+                if (ans === finalQuizQuestions[idx].correct) correctCount++;
+            });
+
+            const score = correctCount * 10;
+            appState.quiz.score = score;
+            appState.quiz.lastTaken = new Date().toISOString();
+            saveAppData();
+
+            renderResultScreen(score, correctCount, 10 - correctCount);
+            goToScreen('result');
+        }
+
+        function renderResultScreen(score, correct, wrong) {
+            document.getElementById('resStudentInfo').innerText = `${appState.student.name} • Kelas ${appState.student.kelas} (Absen ${appState.student.absen})`;
+            document.getElementById('resScoreNum').innerText = score;
+            document.getElementById('resStatsDetail').innerText = `Jawaban Benar: ${correct} | Salah: ${wrong}`;
+
+            const badge = document.getElementById('resCategoryBadge');
+            const feedback = document.getElementById('resFeedbackText');
+
+            if (score >= 90) {
+                badge.innerText = "SANGAT BAIK";
+                badge.className = "inline-block px-3 py-0.5 rounded-full text-[11px] font-bold mb-2 bg-green-100 text-green-800";
+                feedback.innerHTML = "<i class='ph-fill ph-star mr-1'></i> Luar biasa! Pemahamanmu terhadap seluruh materi Sad Darsana sangat mendalam.";
+            } else if (score >= 80) {
+                badge.innerText = "BAIK";
+                badge.className = "inline-block px-3 py-0.5 rounded-full text-[11px] font-bold mb-2 bg-blue-100 text-blue-800";
+                feedback.innerHTML = "<i class='ph-fill ph-thumbs-up mr-1'></i> Bagus sekali! Kamu telah menguasai sebagian besar materi dengan baik.";
+            } else if (score >= 70) {
+                badge.innerText = "CUKUP";
+                badge.className = "inline-block px-3 py-0.5 rounded-full text-[11px] font-bold mb-2 bg-amber-100 text-amber-800";
+                feedback.innerHTML = "<i class='ph-fill ph-info mr-1'></i> Hasil cukup baik. Kamu dapat mengulang beberapa modul untuk penguatan.";
+            } else {
+                badge.innerText = "PERLU BELAJAR KEMBALI";
+                badge.className = "inline-block px-3 py-0.5 rounded-full text-[11px] font-bold mb-2 bg-red-100 text-red-800";
+                feedback.innerHTML = "<i class='ph-fill ph-warning-circle mr-1'></i> Ayo pelajari kembali modul materi Darsana dan coba kuis sekali lagi!";
+            }
+
+            // Render detailed True/False list review
+            const reviewList = document.getElementById('quizReviewList');
+            reviewList.innerHTML = "";
+
+            finalQuizQuestions.forEach((q, idx) => {
+                const userAns = quizUserAnswers[idx];
+                const isCorrect = userAns === q.correct;
+                const statusBg = isCorrect ? 'bg-green-50 border-green-200 text-green-900' : 'bg-red-50 border-red-200 text-red-900';
+                const statusBadge = isCorrect 
+                    ? `<span class="px-2 py-0.5 rounded bg-green-600 text-white font-bold text-[10px]"><i class="ph-bold ph-check mr-0.5"></i> BENAR</span>`
+                    : `<span class="px-2 py-0.5 rounded bg-red-600 text-white font-bold text-[10px]"><i class="ph-bold ph-x mr-0.5"></i> SALAH</span>`;
+
+                reviewList.innerHTML += `
+                    <div class="p-3 rounded-xl border ${statusBg} text-[11px] space-y-1">
+                        <div class="flex items-start justify-between gap-2">
+                            <span class="font-bold">Soal ${idx + 1}: ${q.q}</span>
+                            ${statusBadge}
+                        </div>
+                        <div class="text-gray-600">
+                            Jawaban Anda: <strong class="${isCorrect ? 'text-green-700' : 'text-red-700'}">${userAns !== null ? q.options[userAns] : 'Tidak dijawab'}</strong>
+                        </div>
+                        ${!isCorrect ? `<div class="text-gray-700">Jawaban Benar: <strong class="text-green-800">${q.options[q.correct]}</strong></div>` : ''}
+                        <div class="text-[10px] text-gray-500 italic mt-0.5">Pembahasan: ${q.explanation}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function saveReflection() {
+            const text = document.getElementById('reflectionInput').value.trim();
+            if (!text) {
+                showModal("Jurnal Kosong", "Silakan tuliskan refleksi atau perenungan belajarmu terlebih dahulu.");
+                return;
+            }
+            showModal("Jurnal Tersimpan", "Refleksi belajarmu berhasil dicatat secara lokal.", true);
+        }
+
+        window.onload = function() {
+            document.getElementById('coverSchoolName').innerText = schoolNameInput;
+            if (loadAppData() && appState.student.name !== "") {
+                goToScreen('dashboard');
+            } else {
+                goToScreen('cover');
+            }
+        };
+    </script>
+</body>
+</html>
